@@ -1,0 +1,68 @@
+import streamlit as st
+import pandas as pd
+from datetime import datetime
+import urllib.parse
+import requests
+from bs4 import BeautifulSoup
+
+# 웹 페이지 설정
+st.set_page_config(page_title="미 증시 모닝 리포트", layout="wide")
+
+st.title("📊 통합 증시 모닝 리포트")
+st.write(f"최종 업데이트: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+
+# --- 함수 정의 (기존 코드와 동일) ---
+def translate_to_kor(text):
+    try:
+        url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ko&dt=t&q=" + urllib.parse.quote(text)
+        res = requests.get(url, timeout=5).json()
+        return res[0][0][0]
+    except: return text
+
+def get_stock_data(name, ticker):
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    try:
+        # 주가 정보
+        c_url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1d&range=5d"
+        c_res = requests.get(c_url, headers=headers).json()
+        prices = c_res['chart']['result'][0]['indicators']['adjclose'][0]['adjclose']
+        diff = ((prices[-1] - prices[-2]) / prices[-2]) * 100
+        
+        # 뉴스 정보
+        s_url = f"https://query2.finance.yahoo.com/v1/finance/search?q={ticker}"
+        s_res = requests.get(s_url, headers=headers).json()
+        news = s_res.get('news', [])[:3]
+        return prices[-1], diff, news
+    except: return None, None, []
+
+# --- 메인 화면 구성 ---
+stocks = {"미국 환율": "USDKRW=X", "애플": "AAPL", "마이크로소프트": "MSFT", "구글": "GOOGL", "아마존": "AMZN", "메타": "META", "테슬라": "TSLA", "엔비디아": "NVDA", "SOXL": "SOXL", "TQQQ": "TQQQ"}
+
+# 주식 섹션 (카드 형식)
+st.header("🇺🇸 미국 증시 및 환율")
+cols = st.columns(5) # 5열 레이아웃
+
+for i, (name, ticker) in enumerate(stocks.items()):
+    with cols[i % 5]:
+        price, diff, news_list = get_stock_data(name, ticker)
+        if price:
+            color = "normal" if abs(diff) < 0.1 else "inverse" if diff < 0 else "off"
+            st.metric(label=name, value=f"{price:,.2f}", delta=f"{diff:.2f}%")
+            with st.expander("관련 뉴스 보기"):
+                for n in news_list:
+                    st.write(f"🔗 [{translate_to_kor(n['title'])}]({n['link']})")
+
+st.divider()
+
+# 한국 뉴스 섹션
+st.header("🇰🇷 한국 주요 경제 뉴스")
+try:
+    url = "https://news.naver.com/section/101"
+    res = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
+    soup = BeautifulSoup(res.text, 'html.parser')
+    news_items = soup.find_all(['a'], class_='sa_text_title')[:10]
+    
+    for i, item in enumerate(news_items):
+        st.write(f"{i+1}. [{item.get_text().strip()}]({item.get('href')})")
+except:
+    st.error("한국 뉴스를 가져오는 중 오류가 발생했습니다.")
