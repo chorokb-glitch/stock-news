@@ -1,39 +1,39 @@
-import streamlit as st
-import pandas as pd
-from datetime import datetime
-import urllib.parse
-import requests
-from bs4 import BeautifulSoup
+st로 스트림된 가져오기
+판다를 PD로 가져오기
+datetime에서 가져오기 datetime
+urllib. parse를 가져옵니다
+가져오기 요청
+bs4에서 BeautifulSoup 가져오기
 
 # 웹 페이지 설정
-st.set_page_config(page_title="미 증시 모닝 리포트", layout="wide")
+st.set_page_config(페이지_title="미 증시 모닝 리포트", 레이아웃="와이드")
 
 st.title("📊 통합 증시 모닝 리포트")
-st.write(f"최종 업데이트: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+st.write(f"최종 업데이트): {datetime.now(.strftime('%Y-%m-%d %H:%M')})"
 
 # --- 함수 정의 (기존 코드와 동일) ---
-def translate_to_kor(text):
-    try:
-        url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ko&dt=t&q=" + urllib.parse.quote(text)
-        res = requests.get(url, timeout=5).json()
-        return res[0][0][0]
-    except: return text
+def translated_to_kor(텍스트):
+ 시도:
+ URL = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ko&dt=t&q=" + urllib.parse.인용문(텍스트)
+ res = requests.get(url, 타임아웃=5).json ()
+ 반품 해상도[0][0]
+ 예외: 텍스트 반환
 
-def get_stock_data(name, ticker):
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    try:
-        # 주가 정보
-        c_url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1d&range=5d"
-        c_res = requests.get(c_url, headers=headers).json()
-        prices = c_res['chart']['result'][0]['indicators']['adjclose'][0]['adjclose']
-        diff = ((prices[-1] - prices[-2]) / prices[-2]) * 100
+def get_stock_data(이름, 티커):
+ 헤더 = {'사용자 에이전트': '모질라/5.0'}
+ 시도:
+ # 주가 정보
+ c_url = f"https://query1.finance.yahoo.com/v8/finance/chart/ {ticker}?interval=1d⦥=5d"
+ c_res = requests.get(c_url, 헤더=headers)json ()
+ 가격 = c_res['차트']['result'][0]['indic']['adj 마감'][0]
+ diff = ((prices[-1] - 가격[-2]) / 가격[-2] * 100
         
-        # 뉴스 정보
-        s_url = f"https://query2.finance.yahoo.com/v1/finance/search?q={ticker}"
-        s_res = requests.get(s_url, headers=headers).json()
-        news = s_res.get('news', [])[:3]
-        return prices[-1], diff, news
-    except: return None, None, []
+ # 뉴스 정보
+ s_url = f"https://query2.finance.yahoo.com/v1/finance/search?q={ticker}"
+ s_res = requests.get(s_url, 헤더=headers)json ()
+ 뉴스 = s_res.get ('news', [][][:3]
+ 반품 가격[-1], diff, 뉴스
+ 제외: 없음, 없음, 없음, [] 반환
 
 # --- 메인 화면 구성 ---
 stocks = {"미국 환율": "USDKRW=X", "애플": "AAPL", "마이크로소프트": "MSFT", "구글": "GOOGL", "아마존": "AMZN", "메타": "META", "테슬라": "TSLA", "엔비디아": "NVDA", "SOXL": "SOXL", "TQQQ": "TQQQ"}
